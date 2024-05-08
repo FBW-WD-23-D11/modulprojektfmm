@@ -1,26 +1,30 @@
-const readlineSync = require('readline-sync');
-let attackers = [];
-let defenders = [];
-
+import readlineSync from 'readline-sync';
+import chalk from 'chalk';
 class Unit {
     name;
     healtpoints;
     dmg;
     armorbreak;
     armor;
-    attack(unit) {
-        if (unit instanceof Unit) {
-            console.log(`${this.name} greift ${unit.name} an`)
-            let reducedarmor = unit.armor - this.armorbreak;
-            if (reducedarmor < 0) { reducedarmor = 0; }
-            console.log(`${this.name} fügt ${unit.name} ${this.dmg / 100 * (100 - reducedarmor)} schaden zu`)
-            unit.healtpoints -= this.dmg / 100 * (100 - reducedarmor);
-            if (unit.healtpoints <= 0) {
-                console.log(`${unit.name} wurde von ${this.name} besiegt`);
-                return true
+    attackAfterSecons(seconds) {
+        setTimeout(attack, 5000);
+    }
+    attack(unit, chulk, timeout) {
+        setTimeout(() => {
+            if (unit instanceof Unit) {
+                console.log(chulk(`${this.name} greift ${unit.name} an`));
+                let reducedarmor = unit.armor - this.armorbreak;
+                if (reducedarmor < 0) { reducedarmor = 0; }
+                console.log(chulk(`${this.name} fügt ${unit.name} ${this.dmg / 100 * (100 - reducedarmor)} schaden zu`))
+                unit.healtpoints -= this.dmg / 100 * (100 - reducedarmor);
+                if (unit.healtpoints <= 0) {
+                    console.log(chulk(`${unit.name} wurde von ${this.name} besiegt`));
+                    return true
+                }
+                else { return false; }
             }
-            else { return false; }
-        }
+        }, timeout);
+
     }
 }
 class Lancer extends Unit {
@@ -68,7 +72,7 @@ function getRandom(arr) {
     return Math.floor(Math.random() * arr.length);
 }
 function shuffle(units) {
-    // Fisher-Yates-Shuffle , mischt das Array zufällig durch
+    // Fisher-Yates-Shuffle , mischt das Array zufaellig durch
     if (Array.isArray(units)) {
         for (let i = units.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -78,52 +82,59 @@ function shuffle(units) {
     // gibt neu gemischtes array zurück
     return units;
 }
+//
 function handleFight(attackers, defenders) {
     shuffle(attackers);
     shuffle(defenders);
-    let attackCount = 0;
-    let indexCount = 0;
-
+    let count = 0;
+    let attackerCount = 0;
+    let defenderCount = 0;
     if (Array.isArray(attackers) && Array.isArray(defenders)) {
-        //console.log("hier")
         while (attackers.length > 0 && defenders.length > 0) {
-            //console.log("hier")
-            if (attackCount % 2 === 0) {
+            if (count % 2 === 0) {
                 let enemyIndex = getRandom(defenders);
-                if (attackers[indexCount] instanceof Unit) {
-                    if (attackers[indexCount].attack(defenders[enemyIndex])) {
-                        return defenders.splice(defenders[enemyIndex], 1);
+                if (attackers[attackerCount] instanceof Unit) {
+                    if (attackers[attackerCount].attack(defenders[enemyIndex], chalk.green, 1000)) {
+                        defenders.splice(enemyIndex, 1);
+                        attackerCount++;
                     }
                 }
 
             }
             else {
                 let enemyIndex = getRandom(attackers);
-                if (defenders[indexCount] instanceof Unit) {
-                    if (defenders[indexCount].attack(attackers[enemyIndex])) {
-                        return attackers.splice(attackers[enemyIndex], 1);
-
+                if (defenders[defenderCount] instanceof Unit) {
+                    if (defenders[defenderCount].attack(attackers[enemyIndex], chalk.red, 1000)) {
+                        attackers.splice(enemyIndex, 1);
+                        defenderCount++;
                     }
                 }
 
             }
-            //console.log(attackers.length);
-            //console.log(defenders.length);
-            indexCount++;
-            attackCount++;
+            if (attackers.length <= attackerCount) {
+                attackerCount = 0;
+            }
+            if (defenders.length <= defenderCount) {
+                defenderCount = 0;
+            }
+            console.log(attackers.length);
+            console.log(defenders.length);
+            count++;
+        }
+        if (defenders.length === 0) {
+            console.log("die angreifer haben gewonnen");
+        }
+        else {
+            console.log("die verteidiger haben gewonnen");
         }
     }
 }
-const clearLine = () => {
-    console.clear();
-    //process.stdout.write('\x1B[2J\x1B[3J\x1B[H');
-};
 function createWarriors(warriorName, teamName) {
     console.log(`wie viele ${warriorName}s soll es im ${teamName} geben ?`)
     let input;
     while (true) {
         input = readlineSync.question();
-        clearLine();
+        console.clear();
         if (!isNaN(input)) {
             console.log(`es gibt ${input} ${warriorName}s`);
             break;
@@ -145,39 +156,21 @@ function addUnits(arrayToAdd, UnitType, count) {
         arrayToAdd.push(new UnitType());
     }
 }
-
+console.clear();
+let attackers = [];
+let defenders = [];
 while (true) {
-    let attackersKnight = 0;
-    let attackersLancer = 0;
-    let attackersArcher = 0;
-    let attackersViking = 0;
 
-    let defendersKnight = 0;
-    let defendersLancer = 0;
-    let defendersArcher = 0;
-    let defendersViking = 0;
+    addUnits(attackers, knight, createWarriors("Knight", "Angreiferteam"));
+    addUnits(attackers, Lancer, createWarriors("Lancer", "Angreiferteam"));
+    addUnits(attackers, Archer, createWarriors("Archer", "Angreiferteam"));
+    addUnits(attackers, Viking, createWarriors("Viking", "Angreiferteam"));
 
-    attackersKnight = createWarriors("Knight", "Angreiferteam");
-    attackersLancer = createWarriors("Lancer", "Angreiferteam");
-    attackersArcher = createWarriors("Archer", "Angreiferteam");
-    attackersViking = createWarriors("Viking", "Angreiferteam");
-
-    defendersKnight = createWarriors("Knight", "Verteidigerteam");
-    defendersLancer = createWarriors("Lancer", "Verteidigerteam");
-    defendersArcher = createWarriors("Archer", "Verteidigerteam");
-    defendersViking = createWarriors("Viking", "Verteidigerteam");
-
-    addUnits(attackers, knight, attackersKnight);
-    addUnits(attackers, Lancer, attackersLancer);
-    addUnits(attackers, Archer, attackersArcher);
-    addUnits(attackers, Viking, attackersViking);
-
-    addUnits(defenders, knight, defendersKnight);
-    addUnits(defenders, Lancer, defendersLancer);
-    addUnits(defenders, Archer, defendersArcher);
-    addUnits(defenders, Viking, defendersViking);
-    //console.log(attackers.length);
-    //console.log(defenders.length);
+    addUnits(defenders, knight, createWarriors("Knight", "Verteidigerteam"));
+    addUnits(defenders, Lancer, createWarriors("Lancer", "Verteidigerteam"));
+    addUnits(defenders, Archer, createWarriors("Archer", "Verteidigerteam"));
+    addUnits(defenders, Viking, createWarriors("Viking", "Verteidigerteam"));
+    console.clear();
     handleFight(attackers, defenders);
     //console.log(attackers[2].attack(defenders[2]))
     break;

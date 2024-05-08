@@ -27,7 +27,7 @@ class BattleSystem {
         return Math.floor(Math.random() * arr.length);
     }
     static shuffle(units) {
-        // Fisher-Yates-Shuffle , mischt das Array zufällig durch
+        // Fisher-Yates-Shuffle , mischt das Array zufaellig durch
         if (Array.isArray(units)) {
             for (let i = units.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
